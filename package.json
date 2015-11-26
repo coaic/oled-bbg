@@ -1,0 +1,14 @@
+{
+  "name": "oled",
+  "version": "1.0.0",
+  "description": "OLED Support for Grove on BBG",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "OLED"
+  ],
+  "author": "BlinkMobile",
+  "license": "ISC"
+}
