@@ -2,13 +2,35 @@
   "name": "oled",
   "version": "1.0.0",
   "description": "OLED Support for Grove on BBG",
-  "main": "index.js",
+  "main": "oled.js",
+  "dependencies": {
+    "wiring-pi": "2.1.0",
+    "freetype2": "0.3.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:coaic/oled-bbg.git"
   },
   "keywords": [
-    "OLED"
+    "bbg",
+    "beaglebone-green",
+    "oled",
+    "lcd",
+    "display",
+    "canvase"
   ],
-  "author": "BlinkMobile",
-  "license": "ISC"
+  "author": {
+    "name": "BlinkMobile"
+  },
+  "license": "BSD",
+  "maintainers": [
+    {
+      "name": "BlinkMobile",
+      "email": "admin@blinkmobile.com.au"
+    }
+  ],
+  "readme": "ERROR: No README data found!"
 }
