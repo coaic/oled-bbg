@@ -1,5 +1,6 @@
-var wiringpi = require("./wiringpi/build/Release/_wiringpi"),
-    wiringPiSetup = wiringpi.wiringPiSetup,
+var 
+    // wiringpi = require("./wiringpi/build/Release/_wiringpi"),
+    // wiringPiSetup = wiringpi.wiringPiSetup,
 
     oled = require("./oled"),
     OLED = oled.OLED,
@@ -12,13 +13,13 @@ var wiringpi = require("./wiringpi/build/Release/_wiringpi"),
 
 Date.prototype.format = function(fmt) { //author: meizz 
     var o = {
-        "M+": this.getMonth() + 1, //月份 
-        "d+": this.getDate(), //日 
-        "h+": this.getHours(), //小时 
-        "m+": this.getMinutes(), //分 
-        "s+": this.getSeconds(), //秒 
-        "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
-        "S": this.getMilliseconds() //毫秒 
+        "M+": this.getMonth() + 1, //
+        "d+": this.getDate(), //
+        "h+": this.getHours(), //
+        "m+": this.getMinutes(), //
+        "s+": this.getSeconds(), //
+        "q+": Math.floor((this.getMonth() + 3) / 3), //
+        "S": this.getMilliseconds() // 
     };
     if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
     for (var k in o)
@@ -26,7 +27,7 @@ Date.prototype.format = function(fmt) { //author: meizz
     return fmt;
 }
 
-wiringPiSetup();
+//wiringPiSetup();
 
 var screen = new OLED({
     clk: 14,
@@ -43,8 +44,8 @@ var screen = new OLED({
     ct = screen.getContext("2d"),
     t, cpus;
 
-ct.fillText("上网从这里开始", 26, 13);
-screen.display();
+// ct.fillText("Fill text", 26, 13);
+// screen.display();
 
 setTimeout(function() {
 

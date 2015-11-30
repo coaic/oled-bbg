@@ -1,24 +1,42 @@
-var wiringpi = require("wiringpi"),
-    wiringPiSetup = wiringpi.wiringPiSetup,
-    delay = wiringpi.delay,
-    shiftOut = wiringpi.shiftOut,
-    pinMode = wiringpi.pinMode,
-    digitalWrite = wiringpi.digitalWrite,
-    OUTPUT = wiringpi.OUTPUT,
-    HIGH = wiringpi.HIGH,
-    LOW = wiringpi.LOW,
-    MSBFIRST = wiringpi.MSBFIRST,
+var 
+    // wiringpi = require("wiringpi"),
+    // wiringPiSetup = wiringpi.wiringPiSetup,
+    // delay = wiringpi.delay,
+    // shiftOut = wiringpi.shiftOut,
+    // pinMode = wiringpi.pinMode,
+    // digitalWrite = wiringpi.digitalWrite,
+    
+    b = require("bonescript"),
+    i2c = require("i2c"),
+    OledAddress = 0x2x,
+    wire = new i2c(address, {device: '/dev/i2c-1'}),
+    // OUTPUT = wiringpi.OUTPUT,
+    // HIGH = wiringpi.HIGH,
+    // LOW = wiringpi.LOW,
+    // MSBFIRST = wiringpi.MSBFIRST,
 
     canvas = require("./canvas"),
     Canvas = canvas.Canvas,
     WRITE = canvas.WRITE,
     BLACK = canvas.BLACK,
 
+    SETCOMMANDLOCK = 0xFD,
+    RESETPROTECTION = 0x12,
     DISPLAYOFF = 0xAE,
     SETDISPLAYCLOCKDIV = 0xD5,
     SETMULTIPLEX = 0xA8,
-    SETDISPLAYOFFSET = 0xD3,
-    SETSTARTLINE = 0x40,
+    NINETYSIX = 0x5F,
+    SETDISPLAYOFFSET = 0xA3,
+    SETSTARTLINE = 0xA1,
+    SETVDDINTERNAL = 0xAB,
+    SETREMAP = 0xA0,
+    SETPHASELENGTH = 0xB1,
+    SETLINEARLUT = 0xB9,
+    SETPRECHARGEVOLTAGE = 0xBC,
+    VCOMH = 0x08,
+    SETVCOMH = 0xBE,
+    POINT86VCC = 0x07,
+    SETSECONDPRECHARGE = 0xB6,
     CHARGEPUMP = 0x8D,
     MEMORYMODE = 0x20,
     SEGREMAP = 0xA0,
@@ -27,12 +45,54 @@ var wiringpi = require("wiringpi"),
     SETCONTRAST = 0x81,
     SETPRECHARGE = 0xD9,
     SETVCOMDETECT = 0xDB,
+    SETDISPLAYCLOCKDIVIDERATIO = 0xB3,
     DISPLAYALLON_RESUME = 0xA4,
     NORMALDISPLAY = 0xA6,
     DISPLAYON = 0xAF,
     SETLOWCOLUMN = 0x00,
     SETHIGHCOLUMN = 0x10,
-    SETSTARTLINE = 0x40;
+    // SETSTARTLINE = 0x40
+    ;
+    
+function sendCommand(cmd, data) {
+    if (arguments.length == 2) {
+        wire.writeBytes(cmd, data, function(err) {
+            console.log("I2C Error sending command: " + cmd + ", data: " + data + ", error: " + err);
+        });
+    } else if (arguments.length == 1) {
+        wire.writeBytes(cmd, null, function(err) {
+            console.log("I2C Error sending command: " + cmd + ", error: " + err);
+        });
+    } else {
+        console.log("I2C too many argumnents to sendCommand");
+    }
+}
+
+function oledInit() {
+    sendCommand(SETCOMMANDLOCK);                        // Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
+    sendCommand(RESETPROTECTION);
+    sendCommand(DISPLAYOFF);                            // Set display off
+    sendCommand(SETMULTIPLEX, [NINTEYSIX]);             // set multiplex ratio
+    sendCommand(SETSTARTLINE, [0x00]);                  // set display start line
+    sendCommand(SETDISPLAYOFFSET, [0x60]);              // set display offset
+    sendCommand(SETREMAP, [0x46]);                      // set remap
+    sendCommand(SETVDDINTERNAL, [0x01]);                // set vdd internal
+    sendCommand(SETCONTRAST, [0x53]);                   // set contrast
+    sendCommand(SETPHASELENGTH, [0x51]);                // set phase length
+    sendCommand(SETDISPLAYCLOCKDIVIDERATIO, [0x01]);    // set display clock divide ratio/oscillator frequency
+    sendCommand(SETLINEARLUT);                          // set linear gray scale
+    sendCommand(SETPRECHARGEVOLTAGE, [VCOMH]);          // set pre charge voltage to VCOMH
+    sendCommand(SETVCOMH, [POINT86VCC]);                // set VCOMh .86 x Vcc
+    sendCommand(SETSECONDPRECHARGE, [0x01]);            // set second pre charge period
+
+    sendCommand(0xD5); // enable second precharge and enternal vsl
+    sendCommand(0X62); // (0x62);
+    sendCommand(0xA4); // Set Normal Display Mode
+    sendCommand(0x2E); // Deactivate Scroll
+    sendCommand(0xAF); // Switch on display
+
+    
+}
 
 function OLED(pins, screen) {
 
@@ -42,11 +102,11 @@ function OLED(pins, screen) {
     this.dc = pins.dc;
     this.cs = pins.cs;
 
-    pinMode(this.clk, OUTPUT);
-    pinMode(this.dat, OUTPUT);
-    pinMode(this.rst, OUTPUT);
-    pinMode(this.dc, OUTPUT);
-    pinMode(this.cs, OUTPUT);
+    b.pinMode(this.clk, b.OUTPUT);
+    b.pinMode(this.dat, b.OUTPUT);
+    b.pinMode(this.rst, b.OUTPUT);
+    b.pinMode(this.dc, b.OUTPUT);
+    b.pinMode(this.cs, b.OUTPUT);
 
     this.super(screen.width, screen.height);
     this.delay = 1000 / (screen.fps || 20);
@@ -69,24 +129,24 @@ function OLED(pins, screen) {
 }
 
 function reset() {
-    digitalWrite(this.rst, HIGH);
+    b.digitalWrite(this.rst, b.HIGH);
     delay(1);
-    digitalWrite(this.rst, LOW);
+    b.digitalWrite(this.rst, b.LOW);
     delay(10);
-    digitalWrite(this.rst, HIGH);
-    //console.log("reseted");
+    b.digitalWrite(this.rst, b.HIGH);
+    console.log("reset");
 }
 
 function write(dc, data) {
     var count = arguments.length,
         i;
-    digitalWrite(this.cs, HIGH);
-    digitalWrite(this.dc, dc ? LOW : HIGH);
-    digitalWrite(this.cs, LOW);
+    b.digitalWrite(this.cs, b.HIGH);
+    b.digitalWrite(this.dc, dc ? b.LOW : b.HIGH);
+    b.digitalWrite(this.cs, b.LOW);
     for (i = 1; i < count; i++) {
-        shiftOut(this.dat, this.clk, MSBFIRST, arguments[i]);
+        b.shiftOut(this.dat, this.clk, MSBFIRST, arguments[i]);
     }
-    digitalWrite(this.cs, HIGH);
+    b.digitalWrite(this.cs, HIGH);
 }
 
 function command(cmd) {
