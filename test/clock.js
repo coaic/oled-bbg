@@ -36,31 +36,30 @@ var screen = new OLED({
     ct = screen.getContext("2d");
 
 
-
-setInterval(function() {
-//setTimeout(function() {
-	var now = new Date;
-    ct.clear();
-	ct.font = "04b03 16pt",
-    ct.fillText(now.format("yyyy-MM-dd"), 0, 40);
-	ct.font = "04b03b 24pt",
-	//ct.font = "bmkitchen 20pt",
-    //ct.fillText(now.format("hh:mm:ss"), 0, 64);
-    //ct.fillText("00:00:00", 0, 64);
-    //ct.fillText("00:00", 0, 64);
-	//ct.font = "04b03b 64pt",
-    ct.fillText(now.format("hh:mm:ss"), 0, 64, 128);
-    screen.display();
-}, 1000);
-
+// setInterval(function() {
+// //setTimeout(function() {
+// 	var now = new Date;
+//     ct.clear();
+// 	ct.font = "04b03 16pt",
+//     ct.fillText(now.format("yyyy-MM-dd"), 0, 40);
+// 	ct.font = "04b03b 24pt",
+// 	//ct.font = "bmkitchen 20pt",
+//     //ct.fillText(now.format("hh:mm:ss"), 0, 64);
+//     //ct.fillText("00:00:00", 0, 64);
+//     //ct.fillText("00:00", 0, 64);
+// 	//ct.font = "04b03b 64pt",
+//     ct.fillText(now.format("hh:mm:ss"), 0, 64, 128);
+//     screen.display();
+// }, 1000);
 
 
 
 
 
-['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach(function(element, index, array) {
-    process.on(element, function() {
-        screen.off();
-        process.exit(1);
-    });
-});
+
+// ['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach(function(element, index, array) {
+//     process.on(element, function() {
+//         screen.off();
+//         process.exit(1);
+//     });
+// });

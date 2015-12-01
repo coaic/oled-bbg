@@ -11,6 +11,7 @@ var
     BUS0 = 0,
     BUS1 = 1,
     BUS2 = 2,
+    INITTIMEOUT = 500,
     i2c1,
     OledAddress = 0x3C,
     // OUTPUT = wiringpi.OUTPUT,
@@ -59,32 +60,38 @@ var
     // SETSTARTLINE = 0x40
     ;
     
-function sendCommand(cmd, data, callback) {
+/function sendCommand(cmd, data, callback) {
     var buffer = new Array();
-    if (arguments.length == 3) {
+    // if (arguments.length == 3) {
+    //     buffer = data.slice(0);
+    //     buffer.unshift(cmd);
+    //     i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
+    //         if (err) {
+    //             console.log("I2C Error sending command: " + cmd + ", data: " + data + ", error: " + err);
+    //             callback(err);
+    //         } else {
+    //             callback();
+    //         }
+    //     });
+    // } else if (arguments.length == 2) {
+    //     buffer.push(cmd);
+    //     i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
+    //         if (err) {
+    //             console.log("I2C Error sending command: " + cmd + ", error: " + err);
+    //             callback(err);
+    //         } else {
+    //             callback();
+    //         }
+    //     });
+    if (arguments.length == 2) {
         buffer = data.slice(0);
         buffer.unshift(cmd);
-        i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
-            if (err) {
-                console.log("I2C Error sending command: " + cmd + ", data: " + data + ", error: " + err);
-                callback(err);
-            } else {
-                callback();
-            }
-        });
-    } else if (arguments.length == 3) {
+        i2c1.i2cWriteSync(OledAddress, buffer.length, buffer);
+    } else if (arguments.length == 1) {
         buffer.push(cmd);
-        i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
-            if (err) {
-                console.log("I2C Error sending command: " + cmd + ", error: " + err);
-                callback(err);
-            } else {
-                callback();
-            }
-        });
+        i2c1.i2cWriteSync(OledAddress, buffer.length, buffer);
     } else {
-        console.log("I2C too many argumnents to sendCommand");
-        callback("I2C too many argumnents to sendCommand");
+        throw "I2C too many argumnents to sendCommand";
     }
 }
 
@@ -111,77 +118,100 @@ function setEnableScroll(on, cb) {
         sendCommand(0x2E, cb);
 }
 
-function setEnableDisplay(on, cb) {
+// function setEnableDisplay(on, cb) {
+//     if (on) 
+//         sendCommand(0xAF, cb);
+//     else
+//         sendCommand(0xAE, cb);    
+// }
+function setEnableDisplay(on) {
     if (on) 
-        sendCommand(0xAF, cb);
+        sendCommand(0xAF);
     else
-        sendCommand(0xAE, cb);    
+        sendCommand(0xAE);    
 }
 
 function init() {
-    async.series([
-        function(cb) {
-            i2c1 = i2c.open(BUS1, cb);
-        },
-        function(cb) {
-            sendCommand(SETCOMMANDLOCK, cb);                        // Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
-        },
-        function(cb) {
-            sendCommand(RESETPROTECTION, cb);
-        },
-        function(cb) {
-            setEnableDisplay(false, cb);
-        },
-        function(cb) {
-            sendCommand(SETMULTIPLEX, [NINTEYSIX], cb);         // set multiplex ratio
-        },
-        function(cb) {
-            sendCommand(SETSTARTLINE, [0x00], cb);                  // set display start line
-        },
-        function(cb) {
-            sendCommand(SETDISPLAYOFFSET, [0x60], cb);              // set display offset
-        },
-        function(cb) {
-            sendCommand(SETREMAP, [0x46], cb);                      // set remap
-        },
-        function(cb) {
-            sendCommand(SETVDDINTERNAL, [0x01], cb);                // set vdd internal
-        },
-        function(cb) {
-            sendCommand(SETCONTRAST, [0x53], cb);                   // set contrast
-        },
-        function(cb) {
-            sendCommand(SETPHASELENGTH, [0x51], cb);                // set phase length
-        },
-        function(cb) {
-            sendCommand(SETDISPLAYCLOCKDIVIDERATIO, [0x01], cb);    // set display clock divide ratio/oscillator frequency
-        },
-        function(cb) {
-            sendCommand(SETLINEARLUT, cb);                          // set linear gray scale
-        },
-        function(cb) {
-            sendCommand(SETPRECHARGEVOLTAGE, [VCOMH], cb);          // set pre charge voltage to VCOMH
-        },
-        function(cb) {
-            sendCommand(SETVCOMH, [POINT86VCC], cb);                // set VCOMh .86 x Vcc
-        },
-        function(cb) {
-            sendCommand(SETSECONDPRECHARGE, [0x01], cb);            // set second pre charge period
-        },
-        function(cb) {
-            sendCommand(SETENABLESECONDPRECHARGE, INTERNALVSL, cb); // enable second pre charge and internal VSL
-        },
+    var initComplete = false,
+        waitTimer;
+        
+    i2c1 = i2c.openSync(BUS1);
+    sendCommand(SETCOMMANDLOCK);
+    sendCommand(RESETPROTECTION);
+    setEnableDisplay(false);
+    sendCommand(SETMULTIPLEX, [NINTEYSIX]);
+    // async.series([
+    //     function(cb) {
+    //         i2c1 = i2c.open(BUS1, cb);
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETCOMMANDLOCK, cb);                        // Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
+    //     },
+    //     function(cb) {
+    //         sendCommand(RESETPROTECTION, cb);
+    //     },
+    //     function(cb) {
+    //         setEnableDisplay(false, cb);
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETMULTIPLEX, [NINTEYSIX], cb);         // set multiplex ratio
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETSTARTLINE, [0x00], cb);                  // set display start line
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETDISPLAYOFFSET, [0x60], cb);              // set display offset
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETREMAP, [0x46], cb);                      // set remap
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETVDDINTERNAL, [0x01], cb);                // set vdd internal
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETCONTRAST, [0x53], cb);                   // set contrast
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETPHASELENGTH, [0x51], cb);                // set phase length
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETDISPLAYCLOCKDIVIDERATIO, [0x01], cb);    // set display clock divide ratio/oscillator frequency
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETLINEARLUT, cb);                          // set linear gray scale
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETPRECHARGEVOLTAGE, [VCOMH], cb);          // set pre charge voltage to VCOMH
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETVCOMH, [POINT86VCC], cb);                // set VCOMh .86 x Vcc
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETSECONDPRECHARGE, [0x01], cb);            // set second pre charge period
+    //     },
+    //     function(cb) {
+    //         sendCommand(SETENABLESECONDPRECHARGE, INTERNALVSL, cb); // enable second pre charge and internal VSL
+    //     },
     
-        function(cb) {
-            setDisplayModeNormal(cb);
-        },
-        function(cb) {
-            setEnableScroll(false, cb);
-        },
-        function(cb) {
-            setEnableDisplay(true, cb);
-        }
-    ]);
+    //     function(cb) {
+    //         setDisplayModeNormal(cb);
+    //     },
+    //     function(cb) {
+    //         setEnableScroll(false, cb);
+    //     },
+    //     function(cb) {
+    //         setEnableDisplay(true, cb);
+    //     }
+    // ], function(err, results) {
+    //     if (err)
+    //         throw err;
+    //     initComplete = true;
+    // });
+    // while(!initComplete) {
+    //     waitTimer = setTimeout(function() {
+    //         console.log(".....Waiting init complete");
+    //     }, INITTIMEOUT);
+    // }
 }
 
 function OLED(pins, screen) {
