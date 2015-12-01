@@ -28,7 +28,7 @@ var screen = new OLED({
     dc: 6,
     cs: 10
 }, {
-    width: 96,
+    width: 128,
     height: 64,
     canvas: res.splash,
     fps: 0

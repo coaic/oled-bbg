@@ -5,11 +5,14 @@ var
     // shiftOut = wiringpi.shiftOut,
     // pinMode = wiringpi.pinMode,
     // digitalWrite = wiringpi.digitalWrite,
-    
+    async = require('async'),
     b = require("bonescript"),
-    i2c = require("i2c"),
-    OledAddress = 0x2x,
-    wire = new i2c(address, {device: '/dev/i2c-1'}),
+    i2c = require("i2c-bus"),
+    BUS0 = 0,
+    BUS1 = 1,
+    BUS2 = 2,
+    i2c1,
+    OledAddress = 0x3C,
     // OUTPUT = wiringpi.OUTPUT,
     // HIGH = wiringpi.HIGH,
     // LOW = wiringpi.LOW,
@@ -22,7 +25,7 @@ var
 
     SETCOMMANDLOCK = 0xFD,
     RESETPROTECTION = 0x12,
-    DISPLAYOFF = 0xAE,
+    // DISPLAYOFF = 0xAE,
     SETDISPLAYCLOCKDIV = 0xD5,
     SETMULTIPLEX = 0xA8,
     NINETYSIX = 0x5F,
@@ -33,6 +36,8 @@ var
     SETPHASELENGTH = 0xB1,
     SETLINEARLUT = 0xB9,
     SETPRECHARGEVOLTAGE = 0xBC,
+    SETENABLESECONDPRECHARGE = 0xD5,
+    INTERNALVSL = 0x62,
     VCOMH = 0x08,
     SETVCOMH = 0xBE,
     POINT86VCC = 0x07,
@@ -50,17 +55,21 @@ var
     NORMALDISPLAY = 0xA6,
     DISPLAYON = 0xAF,
     SETLOWCOLUMN = 0x00,
-    SETHIGHCOLUMN = 0x10,
+    SETHIGHCOLUMN = 0x10
     // SETSTARTLINE = 0x40
     ;
     
 function sendCommand(cmd, data) {
+    var buffer = new Array();
     if (arguments.length == 2) {
-        wire.writeBytes(cmd, data, function(err) {
+        buffer = data.slice(0);
+        buffer.unshift(cmd);
+        i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
             console.log("I2C Error sending command: " + cmd + ", data: " + data + ", error: " + err);
         });
     } else if (arguments.length == 1) {
-        wire.writeBytes(cmd, null, function(err) {
+        buffer.push(cmd);
+        i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
             console.log("I2C Error sending command: " + cmd + ", error: " + err);
         });
     } else {
@@ -68,10 +77,46 @@ function sendCommand(cmd, data) {
     }
 }
 
-function oledInit() {
-    sendCommand(SETCOMMANDLOCK);                        // Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
+function setDisplayModeNormal() {
+    sendCommand(0xA4);
+}
+
+function setDisplayModeAllOn() {
+    sendCommand(0xA5);
+}
+
+function setDisplayModeAllOff() {
+    sendCommand(0xA6);
+}
+
+function setDisplayModeInverse() {
+    sendCommand(0xA7);
+}
+
+function setEnableScroll(on) {
+    if (on)
+        sendCommand(0x2F);
+    else
+        sendCommand(0x2E);
+}
+
+function setEnableDisplay(on) {
+    if (on) 
+        sendCommand(0xAF);
+    else
+        sendCommand(0xAE);    
+}
+
+function init() {
+    async.series([
+        function(cb) {
+            i2c1 = i2c.open(BUS1, cb);
+        },
+        function(cb) {
+            sendCommand(cb, SETCOMMANDLOCK);                        // Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
+        },
     sendCommand(RESETPROTECTION);
-    sendCommand(DISPLAYOFF);                            // Set display off
+    setEnableDisplay(false);
     sendCommand(SETMULTIPLEX, [NINTEYSIX]);             // set multiplex ratio
     sendCommand(SETSTARTLINE, [0x00]);                  // set display start line
     sendCommand(SETDISPLAYOFFSET, [0x60]);              // set display offset
@@ -84,29 +129,27 @@ function oledInit() {
     sendCommand(SETPRECHARGEVOLTAGE, [VCOMH]);          // set pre charge voltage to VCOMH
     sendCommand(SETVCOMH, [POINT86VCC]);                // set VCOMh .86 x Vcc
     sendCommand(SETSECONDPRECHARGE, [0x01]);            // set second pre charge period
-
-    sendCommand(0xD5); // enable second precharge and enternal vsl
-    sendCommand(0X62); // (0x62);
-    sendCommand(0xA4); // Set Normal Display Mode
-    sendCommand(0x2E); // Deactivate Scroll
-    sendCommand(0xAF); // Switch on display
-
+    sendCommand(SETENABLESECONDPRECHARGE, INTERNALVSL); // enable second pre charge and internal VSL
     
+    setDisplayModeNormal();
+    setEnableScroll(false);
+    setEnableDisplay(true);
+    ]);
 }
 
 function OLED(pins, screen) {
 
-    this.clk = pins.clk;
-    this.dat = pins.dat;
-    this.rst = pins.rst;
-    this.dc = pins.dc;
-    this.cs = pins.cs;
+    // this.clk = pins.clk;
+    // this.dat = pins.dat;
+    // this.rst = pins.rst;
+    // this.dc = pins.dc;
+    // this.cs = pins.cs;
 
-    b.pinMode(this.clk, b.OUTPUT);
-    b.pinMode(this.dat, b.OUTPUT);
-    b.pinMode(this.rst, b.OUTPUT);
-    b.pinMode(this.dc, b.OUTPUT);
-    b.pinMode(this.cs, b.OUTPUT);
+    // b.pinMode(this.clk, b.OUTPUT);
+    // b.pinMode(this.dat, b.OUTPUT);
+    // b.pinMode(this.rst, b.OUTPUT);
+    // b.pinMode(this.dc, b.OUTPUT);
+    // b.pinMode(this.cs, b.OUTPUT);
 
     this.super(screen.width, screen.height);
     this.delay = 1000 / (screen.fps || 20);
@@ -129,79 +172,81 @@ function OLED(pins, screen) {
 }
 
 function reset() {
-    b.digitalWrite(this.rst, b.HIGH);
-    delay(1);
-    b.digitalWrite(this.rst, b.LOW);
-    delay(10);
-    b.digitalWrite(this.rst, b.HIGH);
+    init();
     console.log("reset");
 }
 
-function write(dc, data) {
-    var count = arguments.length,
-        i;
-    b.digitalWrite(this.cs, b.HIGH);
-    b.digitalWrite(this.dc, dc ? b.LOW : b.HIGH);
-    b.digitalWrite(this.cs, b.LOW);
-    for (i = 1; i < count; i++) {
-        b.shiftOut(this.dat, this.clk, MSBFIRST, arguments[i]);
-    }
-    b.digitalWrite(this.cs, HIGH);
+// function write(dc, data) {
+//     var count = arguments.length,
+//         i;
+//     b.digitalWrite(this.cs, b.HIGH);
+//     b.digitalWrite(this.dc, dc ? b.LOW : b.HIGH);
+//     b.digitalWrite(this.cs, b.LOW);
+//     for (i = 1; i < count; i++) {
+//         b.shiftOut(this.dat, this.clk, MSBFIRST, arguments[i]);
+//     }
+//     b.digitalWrite(this.cs, HIGH);
+// }
+
+function write(buffer) {
+    i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
+        console.log("I2C Error writing data: " + buffer + ", error: " + err);
+    });
 }
+
+// function command(cmd) {
+//     this.write(true, cmd);
+// }
 
 function command(cmd) {
-    this.write(true, cmd);
+    this.sendCommand(cmd);
 }
 
-function data(data) {
-    this.write(false, data);
+// function data(data) {
+//     this.write(false, data);
+// }
+
+function data(buffer) {
+    this.write(buffer);
 }
 
-function off(){
-    var running = this.running;
-    this.command(DISPLAYOFF);
-    if(running){
-        this.stop();
-        this.running = running;
-    }
+function off() {
+    setEnableDisplay(false);
 }
 
-function on(){
-    this.command(DISPLAYON);
-    if(this.running){
-        this.start();
-    }
+function on() {
+    setEnableDisplay(true);
 }
 
-function init() {
-    var me = this;
-    this.reset();
-    this.off();
-    [
-    //this.command(
-    SETDISPLAYCLOCKDIV, 0x80,
-    SETMULTIPLEX, 0x3F,
-    SETDISPLAYOFFSET, 0x00,
-    SETSTARTLINE | 0x00,
-    CHARGEPUMP, 0x14,
-    MEMORYMODE, 0x00,
-    SEGREMAP | 0x01,
-    COMSCANDEC,
-    SETCOMPINS, 0x12,
-    SETCONTRAST, 0xCF,
-    SETPRECHARGE, 0xF1,
-    SETVCOMDETECT, 0x40,
-    DISPLAYALLON_RESUME,
-    NORMALDISPLAY
-    //);
-    ].forEach(function(cmd) {
-        me.command(cmd);
-    });
-    setTimeout(function() {
-        me.display();
-        me.on();
-    }, 0);
-}
+// function init() {
+//     var me = this;
+//     this.reset();
+//     this.off();
+//     [
+//     //this.command(
+//     SETDISPLAYCLOCKDIV, 0x80,
+//     SETMULTIPLEX, 0x3F,
+//     SETDISPLAYOFFSET, 0x00,
+//     SETSTARTLINE | 0x00,
+//     CHARGEPUMP, 0x14,
+//     MEMORYMODE, 0x00,
+//     SEGREMAP | 0x01,
+//     COMSCANDEC,
+//     SETCOMPINS, 0x12,
+//     SETCONTRAST, 0xCF,
+//     SETPRECHARGE, 0xF1,
+//     SETVCOMDETECT, 0x40,
+//     DISPLAYALLON_RESUME,
+//     NORMALDISPLAY
+//     //);
+//     ].forEach(function(cmd) {
+//         me.command(cmd);
+//     });
+//     setTimeout(function() {
+//         me.display();
+//         me.on();
+//     }, 0);
+// }
 
 function display() {
     var me = this,
