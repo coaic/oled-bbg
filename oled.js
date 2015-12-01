@@ -59,52 +59,63 @@ var
     // SETSTARTLINE = 0x40
     ;
     
-function sendCommand(cmd, data) {
+function sendCommand(cmd, data, callback) {
     var buffer = new Array();
-    if (arguments.length == 2) {
+    if (arguments.length == 3) {
         buffer = data.slice(0);
         buffer.unshift(cmd);
         i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
-            console.log("I2C Error sending command: " + cmd + ", data: " + data + ", error: " + err);
+            if (err) {
+                console.log("I2C Error sending command: " + cmd + ", data: " + data + ", error: " + err);
+                callback(err);
+            } else {
+                callback();
+            }
         });
-    } else if (arguments.length == 1) {
+    } else if (arguments.length == 3) {
         buffer.push(cmd);
         i2c1.i2cWrite(OledAddress, buffer.length, buffer, function(err, bytesWritten, buffer) {
-            console.log("I2C Error sending command: " + cmd + ", error: " + err);
+            if (err) {
+                console.log("I2C Error sending command: " + cmd + ", error: " + err);
+                callback(err);
+            } else {
+                callback();
+            }
         });
     } else {
         console.log("I2C too many argumnents to sendCommand");
+        callback("I2C too many argumnents to sendCommand");
     }
 }
 
-function setDisplayModeNormal() {
-    sendCommand(0xA4);
+function setDisplayModeNormal(cb) {
+    sendCommand(0xA4, cb);
 }
 
-function setDisplayModeAllOn() {
-    sendCommand(0xA5);
+function setDisplayModeAllOn(cb) {
+    sendCommand(0xA5, cb);
 }
 
-function setDisplayModeAllOff() {
-    sendCommand(0xA6);
+function setDisplayModeAllOff(cb) {
+    sendCommand(0xA6, cb);
 }
 
-function setDisplayModeInverse() {
-    sendCommand(0xA7);
+function setDisplayModeInverse(cb) {
+    sendCommand(0xA7, cb);
 }
 
-function setEnableScroll(on) {
+function setEnableScroll(on, cb) {
     if (on)
-        sendCommand(0x2F);
+        sendCommand(0x2F, cb);
     else
-        sendCommand(0x2E);
+        sendCommand(0x2E, cb);
 }
 
-function setEnableDisplay(on) {
+function setEnableDisplay(on, cb) {
     if (on) 
-        sendCommand(0xAF);
+        sendCommand(0xAF, cb);
     else
-        sendCommand(0xAE);    
+        sendCommand(0xAE, cb);    
 }
 
 function init() {
@@ -113,27 +124,63 @@ function init() {
             i2c1 = i2c.open(BUS1, cb);
         },
         function(cb) {
-            sendCommand(cb, SETCOMMANDLOCK);                        // Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
+            sendCommand(SETCOMMANDLOCK, cb);                        // Unlock OLED driver IC MCU interface from entering command. i.e: Accept commands
         },
-    sendCommand(RESETPROTECTION);
-    setEnableDisplay(false);
-    sendCommand(SETMULTIPLEX, [NINTEYSIX]);             // set multiplex ratio
-    sendCommand(SETSTARTLINE, [0x00]);                  // set display start line
-    sendCommand(SETDISPLAYOFFSET, [0x60]);              // set display offset
-    sendCommand(SETREMAP, [0x46]);                      // set remap
-    sendCommand(SETVDDINTERNAL, [0x01]);                // set vdd internal
-    sendCommand(SETCONTRAST, [0x53]);                   // set contrast
-    sendCommand(SETPHASELENGTH, [0x51]);                // set phase length
-    sendCommand(SETDISPLAYCLOCKDIVIDERATIO, [0x01]);    // set display clock divide ratio/oscillator frequency
-    sendCommand(SETLINEARLUT);                          // set linear gray scale
-    sendCommand(SETPRECHARGEVOLTAGE, [VCOMH]);          // set pre charge voltage to VCOMH
-    sendCommand(SETVCOMH, [POINT86VCC]);                // set VCOMh .86 x Vcc
-    sendCommand(SETSECONDPRECHARGE, [0x01]);            // set second pre charge period
-    sendCommand(SETENABLESECONDPRECHARGE, INTERNALVSL); // enable second pre charge and internal VSL
+        function(cb) {
+            sendCommand(RESETPROTECTION, cb);
+        },
+        function(cb) {
+            setEnableDisplay(false, cb);
+        },
+        function(cb) {
+            sendCommand(SETMULTIPLEX, [NINTEYSIX], cb);         // set multiplex ratio
+        },
+        function(cb) {
+            sendCommand(SETSTARTLINE, [0x00], cb);                  // set display start line
+        },
+        function(cb) {
+            sendCommand(SETDISPLAYOFFSET, [0x60], cb);              // set display offset
+        },
+        function(cb) {
+            sendCommand(SETREMAP, [0x46], cb);                      // set remap
+        },
+        function(cb) {
+            sendCommand(SETVDDINTERNAL, [0x01], cb);                // set vdd internal
+        },
+        function(cb) {
+            sendCommand(SETCONTRAST, [0x53], cb);                   // set contrast
+        },
+        function(cb) {
+            sendCommand(SETPHASELENGTH, [0x51], cb);                // set phase length
+        },
+        function(cb) {
+            sendCommand(SETDISPLAYCLOCKDIVIDERATIO, [0x01], cb);    // set display clock divide ratio/oscillator frequency
+        },
+        function(cb) {
+            sendCommand(SETLINEARLUT, cb);                          // set linear gray scale
+        },
+        function(cb) {
+            sendCommand(SETPRECHARGEVOLTAGE, [VCOMH], cb);          // set pre charge voltage to VCOMH
+        },
+        function(cb) {
+            sendCommand(SETVCOMH, [POINT86VCC], cb);                // set VCOMh .86 x Vcc
+        },
+        function(cb) {
+            sendCommand(SETSECONDPRECHARGE, [0x01], cb);            // set second pre charge period
+        },
+        function(cb) {
+            sendCommand(SETENABLESECONDPRECHARGE, INTERNALVSL, cb); // enable second pre charge and internal VSL
+        },
     
-    setDisplayModeNormal();
-    setEnableScroll(false);
-    setEnableDisplay(true);
+        function(cb) {
+            setDisplayModeNormal(cb);
+        },
+        function(cb) {
+            setEnableScroll(false, cb);
+        },
+        function(cb) {
+            setEnableDisplay(true, cb);
+        }
     ]);
 }
 
