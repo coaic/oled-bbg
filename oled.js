@@ -60,8 +60,8 @@ var
     // SETSTARTLINE = 0x40
     ;
     
-/function sendCommand(cmd, data, callback) {
-    var buffer = new Array();
+function sendCommand(cmd, data, callback) {
+    // var buffer = new Array();
     // if (arguments.length == 3) {
     //     buffer = data.slice(0);
     //     buffer.unshift(cmd);
@@ -83,39 +83,60 @@ var
     //             callback();
     //         }
     //     });
-    if (arguments.length == 2) {
-        buffer = data.slice(0);
-        buffer.unshift(cmd);
-        i2c1.i2cWriteSync(OledAddress, buffer.length, buffer);
+    if (arguments.length == 2 && data.length == 1) {
+        i2c1.writeByteSync(OledAddress, cmd, data[0]);
+    } else if (arguments.length == 2 && data.length > 1) {
+        i2c1.writeI2cBlockSync(OledAddress, cmd, data.length, data)
     } else if (arguments.length == 1) {
-        buffer.push(cmd);
-        i2c1.i2cWriteSync(OledAddress, buffer.length, buffer);
+        i2c1.sendByteSync(OledAddress, cmd);
     } else {
         throw "I2C too many argumnents to sendCommand";
     }
 }
 
-function setDisplayModeNormal(cb) {
-    sendCommand(0xA4, cb);
+// function setDisplayModeNormal(cb) {
+//     sendCommand(0xA4, cb);
+// }
+
+// function setDisplayModeAllOn(cb) {
+//     sendCommand(0xA5, cb);
+// }
+
+// function setDisplayModeAllOff(cb) {
+//     sendCommand(0xA6, cb);
+// }
+
+// function setDisplayModeInverse(cb) {
+//     sendCommand(0xA7, cb);
+// }
+
+// function setEnableScroll(on, cb) {
+//     if (on)
+//         sendCommand(0x2F, cb);
+//     else
+//         sendCommand(0x2E, cb);
+// }
+function setDisplayModeNormal() {
+    sendCommand(0xA4);
 }
 
-function setDisplayModeAllOn(cb) {
-    sendCommand(0xA5, cb);
+function setDisplayModeAllOn() {
+    sendCommand(0xA5);
 }
 
-function setDisplayModeAllOff(cb) {
-    sendCommand(0xA6, cb);
+function setDisplayModeAllOff() {
+    sendCommand(0xA6);
 }
 
-function setDisplayModeInverse(cb) {
-    sendCommand(0xA7, cb);
+function setDisplayModeInverse() {
+    sendCommand(0xA7);
 }
 
-function setEnableScroll(on, cb) {
+function setEnableScroll(on) {
     if (on)
-        sendCommand(0x2F, cb);
+        sendCommand(0x2F);
     else
-        sendCommand(0x2E, cb);
+        sendCommand(0x2E);
 }
 
 // function setEnableDisplay(on, cb) {
@@ -139,7 +160,25 @@ function init() {
     sendCommand(SETCOMMANDLOCK);
     sendCommand(RESETPROTECTION);
     setEnableDisplay(false);
-    sendCommand(SETMULTIPLEX, [NINTEYSIX]);
+    sendCommand(SETMULTIPLEX, [ NINETYSIX ]);
+    sendCommand(SETSTARTLINE, [ 0x00 ]);
+    sendCommand(SETDISPLAYOFFSET, [ 0x60 ]);              // set display offset
+    sendCommand(SETREMAP, [ 0x46 ]);                      // set remap
+    sendCommand(SETVDDINTERNAL, [ 0x01 ]);                // set vdd internal
+    sendCommand(SETCONTRAST, [ 0x53 ]);                   // set contrast
+    sendCommand(SETPHASELENGTH, [ 0x51 ]);                // set phase length
+    sendCommand(SETDISPLAYCLOCKDIVIDERATIO, [ 0x01 ]);    // set display clock divide ratio/oscillator frequency
+    sendCommand(SETLINEARLUT);                          // set linear gray scale
+    sendCommand(SETPRECHARGEVOLTAGE, [ VCOMH ]);          // set pre charge voltage to VCOMH
+    sendCommand(SETVCOMH, [ POINT86VCC ]);                // set VCOMh .86 x Vcc
+    sendCommand(SETSECONDPRECHARGE, [ 0x01 ]);            // set second pre charge period
+    sendCommand(SETENABLESECONDPRECHARGE, [ INTERNALVSL ]); // enable second pre charge and internal VSL
+
+    setDisplayModeNormal();
+    setEnableScroll(false);
+    setEnableDisplay(true);
+
+    process.exit(1)
     // async.series([
     //     function(cb) {
     //         i2c1 = i2c.open(BUS1, cb);
