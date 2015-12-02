@@ -27,12 +27,12 @@ var screen = new OLED({
     rst: 13,
     dc: 6,
     cs: 10
-}, {
+    }, {
     width: 128,
     height: 64,
     canvas: res.splash,
     fps: 0
-}),
+    }),
     ct = screen.getContext("2d");
 
 
@@ -52,14 +52,26 @@ var screen = new OLED({
 //     screen.display();
 // }, 1000);
 
+screen.init(function(){
+    setInterval(function() {
+    	var now = new Date;
+        ct.clear();
+    	ct.font = "04b03 16pt",
+        ct.fillText(now.format("yyyy-MM-dd"), 0, 40);
+    	ct.font = "04b03b 24pt",
+        ct.fillText(now.format("hh:mm:ss"), 0, 64, 128);
+        screen.display();
+    }, 1000);
+    
+});
 
 
 
 
-
-// ['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach(function(element, index, array) {
-//     process.on(element, function() {
-//         screen.off();
-//         process.exit(1);
-//     });
-// });
+['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach(function(element, index, array) {
+    process.on(element, function() {
+        // screen.off();
+        console.log("....Clock exiting on Signal");
+        process.exit(1);
+    });
+});
