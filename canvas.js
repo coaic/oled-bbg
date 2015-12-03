@@ -6,7 +6,7 @@ var Font = require("font").Font,
     FONT_MAP = {
         "04b03": __dirname+"/font/fonts/04b03.ttf",
         "04b03b": __dirname+"/font/fonts/04b03b.ttf",
-        "04b08": __dirname+"/font/fonts/04b08.ttf",
+        "04b08": __dirname+"/font/fonts/04B_03__.TTF",
         "tomato_coffee": __dirname+"/font/fonts/tomato_coffee.ttf",
         "paskowy": __dirname+"/font/fonts/paskowy.ttf",
         "wqy-microhei": __dirname+"/font/fonts/wqy-microhei.ttc",
