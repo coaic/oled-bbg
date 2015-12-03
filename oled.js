@@ -21,9 +21,8 @@ var
 
     Canvas = require("canvas"),
     Image = Canvas.Image,
-    Canvas = canvas.Canvas,
-    WRITE = canvas.WRITE,
-    BLACK = canvas.BLACK,
+    WRITE = Canvas.WRITE,
+    BLACK = Canvas.BLACK,
 
     SETCOMMANDLOCK = 0xFD,
     RESETPROTECTION = 0x12,
