@@ -68,10 +68,10 @@ screen.init(function(){
 
 
 
-['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach(function(element, index, array) {
-    process.on(element, function() {
-        // screen.off();
-        console.log("....Clock exiting on Signal");
-        process.exit(1);
-    });
-});
+// ['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'].forEach(function(element, index, array) {
+//     process.on(element, function() {
+//         // screen.off();
+//         console.log("....Clock exiting on Signal");
+//         process.exit(1);
+//     });
+// });

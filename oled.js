@@ -76,7 +76,7 @@ function sendCommand() {
     }
 
     if (3 == arguments.length && 1 == data.length) {
-        i2c1.writeByte(OledAddress, data[0], function(err, bytesWritten, buffer) {
+        i2c1.writeByte(OledAddress, cmd, data[0], function(err, bytesWritten, buffer) {
             if (err) {
                 console.log("I2C Error sending command: " + cmd + ", data: " + data[0] + ", error: " + err);
                 callback(err);
