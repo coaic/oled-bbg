@@ -1,12 +1,12 @@
-var Font = require("font").Font,
+var Font = require("font"),
 
     CONTEXT_MAP = {
         "2d": Context2D
     },
     FONT_MAP = {
-        "04b03": __dirname+"/font/fonts/04b03.ttf",
+        "04b03": __dirname+"/font/fonts/04B_03.TTF",
         "04b03b": __dirname+"/font/fonts/04b03b.ttf",
-        "04b08": __dirname+"/font/fonts/04B_03__.TTF",
+        "04b08": __dirname+"/font/fonts/04B_08__.TTF",
         "tomato_coffee": __dirname+"/font/fonts/tomato_coffee.ttf",
         "paskowy": __dirname+"/font/fonts/paskowy.ttf",
         "wqy-microhei": __dirname+"/font/fonts/wqy-microhei.ttc",
@@ -14,7 +14,7 @@ var Font = require("font").Font,
         "bmkitchen": __dirname+"/font/fonts/bmkitchen.ttf",
     },
     FONT_LOADER = {},
-    DEFAULT_FONT = "wqy-bitmapsong",
+    DEFAULT_FONT = "04b03",
     SPACING = 1,
     WRITE = 1,
     BLACK = 0;
@@ -163,7 +163,9 @@ function __getFontConfig(font) {
 }
 
 function __getFontLoader(file) {
-    return FONT_LOADER[file] || (FONT_LOADER[file] = new Font(file));
+    return FONT_LOADER[file] || (FONT_LOADER[file] = function(file) {
+        return Font.load(file);
+    });
 }
 
 Context2D.prototype = {
