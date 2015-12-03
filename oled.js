@@ -19,7 +19,8 @@ var
     // LOW = wiringpi.LOW,
     // MSBFIRST = wiringpi.MSBFIRST,
 
-    canvas = require("./canvas"),
+    Canvas = require("canvas"),
+    Image = Canvas.Image,
     Canvas = canvas.Canvas,
     WRITE = canvas.WRITE,
     BLACK = canvas.BLACK,
